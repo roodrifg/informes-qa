@@ -274,6 +274,30 @@
   .sp-file{font-size:9px;color:#3f3f46;flex:1;padding:0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .sp-add{font-size:9px;font-weight:800;padding:3px 9px;background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.25);border-radius:5px;color:#06b6d4;cursor:pointer;transition:all .15s;flex-shrink:0;font-family:'Inter',sans-serif}
   .sp-add:hover{background:#06b6d4;color:#000}
+
+  /* ── Selects de enriquecimiento / maestros ──────────────────── */
+  .en-file-sel {
+    width: 100%;
+    background: rgba(0,0,0,.28);
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 7px;
+    padding: 6px 24px 6px 9px;
+    font-size: 11px;
+    color: #e4e4e7;
+    outline: none;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='9' viewBox='0 0 24 24' fill='none' stroke='%2352525b' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 7px center;
+    transition: border-color .15s;
+    color-scheme: dark;
+  }
+  .en-file-sel:focus { border-color: #fbbf24; background-color: rgba(234,179,8,.05); }
+  .en-file-sel option { background: #18181b; color: #e4e4e7; }
+
   </style>
   </head>
   <body class="p-3 sm:p-4 md:p-6 min-h-screen">
@@ -996,6 +1020,8 @@
       currentStep = step;
       window.scrollTo({top:0, behavior:'smooth'});
     updateStepCounter(typeof step !== 'undefined' ? step : currentStep);
+    if (currentStep === 5) refreshEnSelects();
+    if (currentStep === 6) autoFillChecklist();
   }
 
   // ── Envío real a Teams (vía Power Automate → Adaptive Card) ─
@@ -1837,7 +1863,30 @@
   function nxt(id){cnt[id]=(cnt[id]||0)+1;return cnt[id]}
   const X=`<td><button class="p-1.5 text-zinc-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all" onclick="this.closest('tr').remove()" title="Eliminar"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg></button></td>`;
   function rNum(id){const n=nxt(id);return`<tr><td>${n}</td><td><input type="text" placeholder="ID" style="width:50px"></td><td><input type="text" placeholder="col fuente A" class="colcol"></td><td><input type="text" placeholder="col fuente B" class="colcol"></td><td><input type="text" placeholder="Ej: 0.01" style="width:70px"></td><td><select><option>NO</option><option>SI</option></select></td><td><input type="text" placeholder="descripcion..."></td>${X}</tr>`}
-  function rEn(id){const n=nxt(id);return`<tr><td>${n}</td><td><input type="text" placeholder="tabla origen"></td><td><input type="text" placeholder="campo origen" class="colcol"></td><td><input type="text" placeholder="campo union" class="colcol"></td><td><input type="text" placeholder="campo a traer" class="colcol"></td><td><input type="text" placeholder="nombre maestro"></td><td><input type="text" placeholder="notas..."></td>${X}</tr>`}
+  function getFileOpts(selectedVal=''){
+    const files=getFileCards();
+    const opts=files.map(f=>{
+      const n=f.nombre||'(sin nombre)';
+      const sel=n===selectedVal?'selected':'';
+      return`<option value="${n}" ${sel}>${n}</option>`;
+    }).join('');
+    return`<option value="">— Selecciona archivo —</option>${opts}`;
+  }
+  function refreshEnSelects(){
+    document.querySelectorAll('.en-file-sel').forEach(sel=>{
+      const cur=sel.value;
+      sel.innerHTML=getFileOpts(cur);
+    });
+  }
+  function rEn(id,vals={}){const n=nxt(id);return`<tr>
+    <td>${n}</td>
+    <td><select class="en-file-sel" >${getFileOpts(vals.tabla||'')}</select></td>
+    <td><input type="text" placeholder="campo origen" class="colcol" value="${vals.campo_tabla||''}"></td>
+    <td><input type="text" placeholder="campo unión" class="colcol" value="${vals.campo_maestro||''}"></td>
+    <td><input type="text" placeholder="campo a traer" class="colcol" value="${vals.campo_obtiene||''}"></td>
+    <td><select class="en-file-sel" >${getFileOpts(vals.tabla_maestra||'')}</select></td>
+    <td><input type="text" placeholder="notas..." value="${vals.notas||''}"></td>
+    ${X}</tr>`}
   function rChk(id){const n=nxt(id);return`<tr><td>${n}</td><td><input type="text" placeholder="nombre-archivo.csv"></td><td><select class="chk-st st-pend" onchange="updSt(this)"><option>PENDIENTE</option><option>RECIBIDO</option><option>NO APLICA</option></select></td><td><input type="date"></td><td><input type="text" placeholder="sin problemas / describir..."></td>${X}</tr>`}
   function updSt(el){el.className='chk-st '+(el.value==='RECIBIDO'?'st-ok':el.value==='NO APLICA'?'st-na':'st-pend')}
   const stClass={'PENDIENTE':'background:rgba(234,179,8,.15);color:#fbbf24;font-weight:700','RECIBIDO':'background:rgba(16,185,129,.15);color:#34d399;font-weight:700','NO APLICA':'background:rgba(113,113,122,.15);color:#a1a1aa;font-weight:600','SI':'background:rgba(16,185,129,.15);color:#34d399;font-weight:700','NO':'background:rgba(239,68,68,.15);color:#f87171;font-weight:700'};
@@ -2287,6 +2336,32 @@
   // ══════════════════════════════════════════════════════════════
   // El estado se lee desde #p_estado y se mete en data.proyecto.estado
   // sendToTeamsWebhook ya usa data.proyecto — solo hay que mostrarlo en la card
+
+
+  // Auto-rellena el checklist de revisión con los archivos del paso 3
+  function autoFillChecklist() {
+    const tb = document.getElementById('tb-chk');
+    if (!tb) return;
+    const files = getFileCards();
+    if (!files.length) return;
+
+    // Solo rellenar si la tabla está vacía o tiene filas vacías
+    const existingRows = [...tb.querySelectorAll('tr')];
+    const hasData = existingRows.some(r => {
+      const inp = r.querySelector('input[type="text"]');
+      return inp && inp.value.trim();
+    });
+    if (hasData) return; // ya tiene datos, no sobreescribir
+
+    tb.innerHTML = '';
+    cnt['tb-chk'] = 0;
+    files.forEach(f => {
+      tb.insertAdjacentHTML('beforeend', rChk('tb-chk'));
+      const lastRow = tb.lastElementChild;
+      const nameInp = lastRow.querySelector('input[type="text"]');
+      if (nameInp) nameInp.value = f.nombre || '';
+    });
+  }
 
   </script>
   </body>
