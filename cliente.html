@@ -446,8 +446,7 @@
               <p class="text-sm text-zinc-300 font-bold mb-1">¿Qué ocurre cuando hago clic en "Enviar"?</p>
               <ul class="text-xs text-zinc-400 space-y-1">
                 <li>→ El informe se envía directamente al <strong class="text-zinc-300">canal de Teams</strong> del equipo QA.</li>
-                <li>→ Se descarga un archivo <strong class="text-zinc-300">.ics</strong> para añadir la fecha de entrega a tu calendario.</li>
-                <li>→ Se descarga una <strong class="text-zinc-300">copia en JSON</strong> del informe para que puedas compartirla si te la piden.</li>
+                <li>→ El equipo revisará la información y <strong class="text-zinc-300">se pondrá en contacto contigo</strong> en breve.</li>
                 <li>→ El formulario queda <strong class="text-zinc-300">bloqueado</strong>: ya no podrás editarlo (para garantizar la integridad del informe).</li>
               </ul>
             </div>
@@ -833,15 +832,7 @@
       <div class="text-left space-y-2 mb-6" id="success-desc">
         <div class="flex items-start gap-3 p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-lg">
           <svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
-          <p class="text-sm text-zinc-300">El informe se ha enviado al <strong class="text-zinc-100">canal de Teams</strong> del equipo QA.</p>
-        </div>
-        <div class="flex items-start gap-3 p-3 bg-blue-500/5 border border-blue-500/20 rounded-lg">
-          <svg class="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5"/></svg>
-          <p class="text-sm text-zinc-300">Se ha descargado un archivo <strong class="text-zinc-100">.ics</strong> — ábrelo para añadir la fecha de entrega a tu calendario (Outlook, Teams…).</p>
-        </div>
-        <div class="flex items-start gap-3 p-3 bg-purple-500/5 border border-purple-500/20 rounded-lg">
-          <svg class="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
-          <p class="text-sm text-zinc-300">Se ha descargado una <strong class="text-zinc-100">copia JSON</strong> del informe. Compártela con el equipo si te la solicitan.</p>
+          <p class="text-sm text-zinc-300">El informe se ha enviado al <strong class="text-zinc-100">canal de Teams</strong> del equipo QA. En breve nos pondremos en contacto contigo.</p>
         </div>
         <div class="flex items-start gap-3 p-3 bg-zinc-500/5 border border-zinc-700/40 rounded-lg">
           <svg class="w-4 h-4 text-zinc-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
@@ -1171,17 +1162,7 @@
     if (CONFIG.TEAMS_WEBHOOK_URL) toast('Enviando informe a Teams…', 'info');
     const teamsResult = await sendToTeamsWebhook(data);
 
-    // 4. Descargar .ics para el calendario
-    generateICS(data);
-
-    // 5. Descargar JSON para que el equipo pueda cargarlo en modo dev
-    const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'informe_qa_'+(data.proyecto.nombre||'proyecto').replace(/\s+/g,'_')+'.json';
-    a.click();
-
-    // 6. Actualizar el item de Teams en el overlay de éxito si falló
+    // 4. Actualizar el item de Teams en el overlay de éxito si falló
     if (teamsResult && !teamsResult.ok && !teamsResult.skipped) {
       const teamsItem = document.querySelector('#success-desc > div:first-child');
       if (teamsItem) {
@@ -1191,7 +1172,7 @@
         const svgEl = teamsItem.querySelector('svg');
         if (svgEl) svgEl.setAttribute('class', svgEl.getAttribute('class').replace('text-emerald-400', 'text-amber-400'));
         const pEl = teamsItem.querySelector('p');
-        if (pEl) pEl.innerHTML = 'Teams <strong class="text-zinc-100">no pudo confirmarse</strong>. El JSON descargado contiene todo — compártelo con el equipo QA directamente.';
+        if (pEl) pEl.innerHTML = 'Teams <strong class="text-zinc-100">no pudo confirmarse</strong>. Contacta con el equipo QA directamente.';
       }
     }
 
