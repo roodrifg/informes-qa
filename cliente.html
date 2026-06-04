@@ -379,6 +379,65 @@
     color: #1e293b !important;
   }
 
+
+  /* color-scheme en el root: Chrome/Edge usarán UI nativa oscura para
+     todos los form elements (select, input, scrollbar…) */
+  html.dark  { color-scheme: dark; }
+  html.light { color-scheme: light; }
+
+
+  /* ── Custom Select Dropdown ────────────────────────────────── */
+  .csel-wrap { position: relative; width: 100%; }
+  .csel-trigger {
+    display: flex; align-items: center; justify-content: space-between;
+    background-color: rgba(9,9,11,.85);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 12px; font-family: 'Inter',sans-serif; font-weight: 500;
+    color: #e4e4e7; cursor: pointer; user-select: none;
+    transition: border-color .15s, background-color .15s;
+    min-height: 34px;
+  }
+  .csel-trigger:hover { border-color: rgba(255,255,255,.22); }
+  .csel-trigger.open  { border-color: #06b6d4; background-color: rgba(6,182,212,.07); box-shadow: 0 0 0 3px rgba(6,182,212,.12); }
+  .csel-trigger svg   { flex-shrink: 0; margin-left: 6px; color: #52525b; transition: transform .2s; }
+  .csel-trigger.open svg { transform: rotate(180deg); color: #06b6d4; }
+  .csel-val { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .csel-val.placeholder { color: #52525b; }
+  .csel-list {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 999;
+    background: #111113; border: 1px solid rgba(6,182,212,.35);
+    border-radius: 10px; padding: 4px;
+    box-shadow: 0 16px 40px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.04);
+    max-height: 220px; overflow-y: auto; display: none;
+  }
+  .csel-list.open { display: block; animation: popIn .15s cubic-bezier(.34,1.56,.64,1); }
+  .csel-opt {
+    padding: 7px 10px; border-radius: 7px; font-size: 12px; font-family: 'Inter',sans-serif;
+    color: #d4d4d8; cursor: pointer; transition: background .1s; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  .csel-opt:hover  { background: rgba(6,182,212,.12); color: #e4e4e7; }
+  .csel-opt.active { background: rgba(6,182,212,.18); color: #06b6d4; font-weight: 600; }
+  .csel-opt.placeholder-opt { color: #52525b; font-style: italic; }
+  /* Scrollbar dentro de la lista */
+  .csel-list::-webkit-scrollbar { width: 4px; }
+  .csel-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 4px; }
+  /* Modo claro */
+  html.light .csel-trigger { background-color: rgba(255,255,255,.9); border-color: rgba(0,0,0,.14); color: #1e293b; }
+  html.light .csel-trigger.open { background-color: rgba(6,182,212,.07); }
+  html.light .csel-list { background: #ffffff; border-color: rgba(6,182,212,.4); }
+  html.light .csel-opt { color: #374151; }
+  html.light .csel-opt:hover { background: rgba(6,182,212,.1); }
+  html.light .csel-opt.active { color: #0891b2; }
+  /* Ajuste para selects pequeños dentro de file-cards */
+  .file-card .csel-trigger { font-size: 11px; padding: 5px 8px; border-radius: 6px; min-height: 28px; }
+  .file-card .csel-opt { font-size: 11px; padding: 5px 8px; }
+  /* Ajuste para selects dentro de tablas */
+  .ctbl .csel-trigger { font-size: 11px; padding: 5px 8px; border-radius: 6px; min-height: 28px; }
+  .ctbl .csel-opt     { font-size: 11px; padding: 5px 8px; }
+
   </style>
   </head>
   <body class="p-3 sm:p-4 md:p-6 min-h-screen">
@@ -2162,6 +2221,7 @@
 
   updateLogoFilter();
   updateLogoFilter();
+  setTimeout(() => initAllCustomSelects(), 200);
   if (!new URLSearchParams(window.location.search).get('data')) {
     if(isDevMode) {
         goToStep(1);
@@ -2443,6 +2503,128 @@
       if (nameInp) nameInp.value = f.nombre || '';
     });
   }
+
+
+  // ══════════════════════════════════════════════════════════════
+  //  Custom Select — reemplaza <select> con dropdown estilizado
+  //  Se aplica a: .fc-sys .fc-lay .cross-file-sel .cross-col-sel
+  //               .num-col-sel .maestro-sel .en-file-sel
+  //               y a .ctbl td select
+  // ══════════════════════════════════════════════════════════════
+  const CSEL_CLASSES = [
+    'fc-sys','fc-lay','cross-file-sel','cross-col-sel',
+    'num-col-sel','maestro-sel','en-file-sel'
+  ];
+
+  function buildCustomSelect(sel) {
+    if (sel._cselDone || sel.disabled) return;
+    sel._cselDone = true;
+    sel.style.display = 'none';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'csel-wrap';
+
+    const trigger = document.createElement('div');
+    trigger.className = 'csel-trigger';
+    trigger.setAttribute('tabindex', '0');
+    trigger.innerHTML = '<span class="csel-val placeholder"></span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>';
+
+    const list = document.createElement('div');
+    list.className = 'csel-list';
+
+    wrap.appendChild(trigger);
+    wrap.appendChild(list);
+    sel.parentNode.insertBefore(wrap, sel);
+    wrap.appendChild(sel);
+
+    function syncDisplay() {
+      const valEl = trigger.querySelector('.csel-val');
+      const chosen = sel.options[sel.selectedIndex];
+      if (!chosen || !chosen.value) {
+        valEl.textContent = chosen ? chosen.text : '—';
+        valEl.className = 'csel-val placeholder';
+      } else {
+        valEl.textContent = chosen.text;
+        valEl.className = 'csel-val';
+      }
+    }
+
+    function buildList() {
+      list.innerHTML = '';
+      [...sel.options].forEach((opt, i) => {
+        const div = document.createElement('div');
+        div.className = 'csel-opt' + (!opt.value ? ' placeholder-opt' : '') + (i === sel.selectedIndex ? ' active' : '');
+        div.textContent = opt.text;
+        div.addEventListener('mousedown', e => {
+          e.preventDefault();
+          sel.selectedIndex = i;
+          sel.dispatchEvent(new Event('change', {bubbles:true}));
+          syncDisplay();
+          closeList();
+        });
+        list.appendChild(div);
+      });
+    }
+
+    function openList() {
+      buildList();
+      list.classList.add('open');
+      trigger.classList.add('open');
+      // Cerrar otros custom selects abiertos
+      document.querySelectorAll('.csel-list.open').forEach(l => {
+        if (l !== list) { l.classList.remove('open'); l.previousSibling?.classList.remove('open'); }
+      });
+    }
+    function closeList() {
+      list.classList.remove('open');
+      trigger.classList.remove('open');
+    }
+
+    trigger.addEventListener('click', () => list.classList.contains('open') ? closeList() : openList());
+    trigger.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); list.classList.contains('open') ? closeList() : openList(); }
+      if (e.key === 'Escape') closeList();
+    });
+
+    // Sincronizar cuando el <select> cambia por código
+    sel.addEventListener('change', syncDisplay);
+
+    // Observer para cuando las opciones cambian (selects dinámicos)
+    new MutationObserver(() => { syncDisplay(); if (list.classList.contains('open')) buildList(); })
+      .observe(sel, {childList: true});
+
+    syncDisplay();
+  }
+
+  function initAllCustomSelects(root = document) {
+    // Selects por clase
+    CSEL_CLASSES.forEach(cls => {
+      root.querySelectorAll(`select.${cls}:not([disabled])`).forEach(buildCustomSelect);
+    });
+    // Selects dentro de tablas ctbl
+    root.querySelectorAll('.ctbl td select:not([disabled])').forEach(buildCustomSelect);
+  }
+
+  // Cerrar al clicar fuera
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.csel-wrap')) {
+      document.querySelectorAll('.csel-list.open').forEach(l => {
+        l.classList.remove('open');
+        l.previousSibling?.classList.remove('open');
+      });
+    }
+  });
+
+  // MutationObserver para aplicar custom select a elementos añadidos dinámicamente
+  new MutationObserver(mutations => {
+    mutations.forEach(m => m.addedNodes.forEach(node => {
+      if (node.nodeType !== 1) return;
+      initAllCustomSelects(node);
+      if (node.matches && CSEL_CLASSES.some(c => node.matches(`select.${c}`))) {
+        buildCustomSelect(node);
+      }
+    }));
+  }).observe(document.body, {childList: true, subtree: true});
 
   </script>
   </body>
