@@ -302,29 +302,24 @@
   /* ════════════════════════════════════════════════════════════
      SELECTS — Estilo unificado para todos los desplegables
      ════════════════════════════════════════════════════════════ */
-  :root {
-    --sel-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2352525b' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-    --sel-bg: rgba(9,9,11,.85);
-    --sel-border: rgba(255,255,255,.1);
-    --sel-border-focus: #06b6d4;
-    --sel-color: #e4e4e7;
-  }
 
-  /* Base para todos los selects fuera de .inp (que ya tiene sus propios estilos) */
   .fc-sys, .fc-lay,
   .cross-file-sel, .cross-col-sel,
   .num-col-sel,
   .maestro-sel,
   .en-file-sel,
   .ctbl td select {
-    background: var(--sel-bg) var(--sel-arrow) no-repeat right 9px center !important;
-    border: 1px solid var(--sel-border) !important;
+    background-color: rgba(9,9,11,.85) !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2352525b' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 9px center !important;
+    border: 1px solid rgba(255,255,255,.12) !important;
     border-radius: 8px !important;
     padding: 7px 26px 7px 10px !important;
     font-size: 12px !important;
     font-family: 'Inter', sans-serif !important;
     font-weight: 500 !important;
-    color: var(--sel-color) !important;
+    color: #e4e4e7 !important;
     -webkit-appearance: none !important;
     appearance: none !important;
     cursor: pointer !important;
@@ -340,52 +335,48 @@
   .maestro-sel:focus,
   .en-file-sel:focus,
   .ctbl td select:focus {
-    border-color: var(--sel-border-focus) !important;
-    background-color: rgba(6,182,212,.06) !important;
-    box-shadow: 0 0 0 3px rgba(6,182,212,.1) !important;
+    border-color: #06b6d4 !important;
+    background-color: rgba(6,182,212,.07) !important;
+    box-shadow: 0 0 0 3px rgba(6,182,212,.12) !important;
   }
 
-  /* Opciones nativas (Chrome/Edge) */
   .fc-sys option, .fc-lay option,
   .cross-file-sel option, .cross-col-sel option,
-  .num-col-sel option,
-  .maestro-sel option,
-  .en-file-sel option,
-  .ctbl td select option { background: #18181b !important; color: #e4e4e7 !important; }
+  .num-col-sel option, .maestro-sel option,
+  .en-file-sel option, .ctbl td select option {
+    background-color: #18181b !important;
+    color: #e4e4e7 !important;
+  }
 
-  /* Modo claro */
+  .fc-sys, .fc-lay {
+    font-size: 11px !important;
+    padding: 5px 20px 5px 8px !important;
+    border-radius: 6px !important;
+    background-position: right 5px center !important;
+  }
+
+  .ctbl td select {
+    font-size: 11px !important;
+    padding: 5px 20px 5px 8px !important;
+    border-radius: 6px !important;
+    background-position: right 5px center !important;
+  }
+
   html.light .fc-sys, html.light .fc-lay,
   html.light .cross-file-sel, html.light .cross-col-sel,
-  html.light .num-col-sel,
-  html.light .maestro-sel,
-  html.light .en-file-sel,
-  html.light .ctbl td select {
-    --sel-bg: rgba(255,255,255,.9);
-    --sel-border: rgba(0,0,0,.12);
-    --sel-color: #1e293b;
+  html.light .num-col-sel, html.light .maestro-sel,
+  html.light .en-file-sel, html.light .ctbl td select {
+    background-color: rgba(255,255,255,.9) !important;
+    border-color: rgba(0,0,0,.15) !important;
+    color: #1e293b !important;
     color-scheme: light !important;
   }
   html.light .fc-sys option, html.light .fc-lay option,
   html.light .cross-file-sel option, html.light .cross-col-sel option,
-  html.light .num-col-sel option,
-  html.light .maestro-sel option,
-  html.light .en-file-sel option,
-  html.light .ctbl td select option { background: #ffffff !important; color: #1e293b !important; }
-
-  /* Ajuste específico para selects pequeños en file-cards (fc-sys/fc-lay) */
-  .fc-sys, .fc-lay {
-    font-size: 11px !important;
-    padding: 5px 22px 5px 8px !important;
-    border-radius: 6px !important;
-    background-position: right 6px center !important;
-  }
-
-  /* Ajuste para selects dentro de tablas ctbl */
-  .ctbl td select {
-    font-size: 11px !important;
-    padding: 5px 22px 5px 8px !important;
-    border-radius: 6px !important;
-    background-position: right 6px center !important;
+  html.light .num-col-sel option, html.light .maestro-sel option,
+  html.light .en-file-sel option, html.light .ctbl td select option {
+    background-color: #ffffff !important;
+    color: #1e293b !important;
   }
 
   </style>
@@ -1470,10 +1461,10 @@
           <div class="flex items-center gap-3 flex-wrap">
             ${auto?'<span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full uppercase">Auto</span>':'<span class="text-[10px] font-bold text-cyan-400 bg-cyan-500/10 px-2.5 py-1 rounded-full uppercase">Manual</span>'}
             ${cols.length?'<span class="text-[10px] font-bold text-purple-400 bg-purple-500/10 px-2.5 py-1 rounded-full">'+cols.length+' cols</span>':''}
-            <select class="fc-sys bg-transparent text-[10px] font-bold text-cyan-400 outline-none cursor-pointer" style="border:none" onchange="syncSys(this,'${id}')">
+            <select class="fc-sys" onchange="syncSys(this,'${id}')">
               ${['','DATABRICKS','QLIK','SAP','ORACLE','BIGQUERY','OTRO'].map(s=>`<option value="${s}" class="bg-zinc-900" ${s===sysG?'selected':''}>${s||'Sistema...'}</option>`).join('')}
             </select>
-            <select class="fc-lay bg-transparent text-[10px] font-bold text-zinc-400 outline-none cursor-pointer" style="border:none">
+            <select class="fc-lay">
               ${['','RAIZ','BRONZE','SILVER','GOLD'].map(l=>`<option value="${l}" class="bg-zinc-900">${l||'Capa...'}</option>`).join('')}
             </select>
           </div>
